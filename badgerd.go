@@ -27,13 +27,13 @@ type buildStatus struct {
 }
 
 func main() {
-	config, _ = readConfig()
+	config = readConfig()
 
 	http.HandleFunc("/badger/", badgeHandler)
 	http.ListenAndServe(":8080", nil)
 }
 
-func readConfig() (*Config, error) {
+func readConfig() *Config {
 	file, err := os.Open("config.json")
 	if err != nil {
 		log.Fatal(err)
@@ -45,19 +45,7 @@ func readConfig() (*Config, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return conf, nil
-}
-
-func getBadge(status string) string {
-	switch {
-	case status == "blue":
-		return "build-passing.svg"
-	case status == "red":
-		return "build-failing.svg"
-	case strings.Index(status, "_anime") > 0:
-		return "build-building.svg"
-	}
-	return "build-error.svg"
+	return conf
 }
 
 func badgeHandler(writer http.ResponseWriter, req *http.Request) {
@@ -93,4 +81,16 @@ func getStatus(project string) (string, error) {
 	}
 
 	return status.Color, nil
+}
+
+func getBadge(status string) string {
+	switch {
+	case status == "blue":
+		return "build-passing.svg"
+	case status == "red":
+		return "build-failing.svg"
+	case strings.Index(status, "_anime") > 0:
+		return "build-building.svg"
+	}
+	return "build-error.svg"
 }
