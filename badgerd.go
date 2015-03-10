@@ -15,15 +15,15 @@ var (
 )
 
 type Config struct {
-	Host  string
-	User  string
-	Token string
+	Host  string `json:host`
+	User  string `json:user`
+	Token string `json:token`
 }
 
 type buildStatus struct {
-	DisplayName string
-	Url         string
-	Color       string
+	DisplayName string `json:displayName`
+	Url         string `json:url`
+	Color       string `json:color`
 }
 
 func main() {
