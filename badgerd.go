@@ -28,9 +28,11 @@ type buildStatus struct {
 
 func main() {
 	config = readConfig()
-
 	http.HandleFunc("/badger/", badgeHandler)
-	http.ListenAndServe(":8080", nil)
+
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func readConfig() *Config {
@@ -50,7 +52,13 @@ func readConfig() *Config {
 
 func badgeHandler(writer http.ResponseWriter, req *http.Request) {
 	project := strings.Split(req.URL.Path, "/")[2]
-	status, _ := getStatus(project)
+	status, err := getStatus(project)
+	if err != nil {
+		log.Println("Error - " + err.Error())
+		http.ServeFile(writer, req, "badges/build-error.svg")
+		return
+	}
+
 	badgeFile := getBadge(status)
 	http.ServeFile(writer, req, "badges/"+badgeFile)
 }
