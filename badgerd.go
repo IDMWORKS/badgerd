@@ -59,23 +59,23 @@ func badgeHandler(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	badgeFile := getBadge(status)
+	badgeFile := getBadge(status.Color)
 	http.ServeFile(writer, req, "badges/"+badgeFile)
 }
 
-func getStatus(project string) (string, error) {
+func getStatus(project string) (*buildStatus, error) {
 	url := "http://" + config.Host + "/job/" + project + "/api/json"
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	req.SetBasicAuth(config.User, config.Token)
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -85,10 +85,10 @@ func getStatus(project string) (string, error) {
 	err = json.Unmarshal(body, &status)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return status.Color, nil
+	return &status, nil
 }
 
 func getBadge(status string) string {
