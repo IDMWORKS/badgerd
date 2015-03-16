@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	// "fmt"
+	"github.com/IDMWORKS/badgerd/badge"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -55,11 +56,11 @@ func badgeHandler(writer http.ResponseWriter, req *http.Request) {
 	status, err := getStatus(project)
 	if err != nil {
 		log.Println("Error - " + err.Error())
-		http.ServeFile(writer, req, "badges/build-error.svg")
+		http.ServeFile(writer, req, "badges/"+badge.ErrorBadge)
 		return
 	}
 
-	badgeFile := getBadge(status.Color)
+	badgeFile, err := badge.ForBuildColor(status.Color)
 	http.ServeFile(writer, req, "badges/"+badgeFile)
 }
 
@@ -89,16 +90,4 @@ func getStatus(project string) (*buildStatus, error) {
 	}
 
 	return &status, nil
-}
-
-func getBadge(status string) string {
-	switch {
-	case status == "blue":
-		return "build-passing.svg"
-	case status == "red":
-		return "build-failing.svg"
-	case strings.Index(status, "_anime") > 0:
-		return "build-building.svg"
-	}
-	return "build-error.svg"
 }
