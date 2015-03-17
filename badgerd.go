@@ -25,7 +25,7 @@ type Config struct {
 
 func main() {
 	config = readConfig()
-	http.HandleFunc("/badger/", badgeHandler)
+	http.HandleFunc("/badge/", badgeHandler)
 
 	if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
 		log.Fatal(err)
