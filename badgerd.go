@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	// "fmt"
+	"fmt"
+	"github.com/IDMWORKS/badgerd/badge"
+	"github.com/IDMWORKS/badgerd/status"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,19 +20,14 @@ type Config struct {
 	Host  string `json:host`
 	User  string `json:user`
 	Token string `json:token`
-}
-
-type buildStatus struct {
-	DisplayName string `json:displayName`
-	Url         string `json:url`
-	Color       string `json:color`
+	Port  string `json:port`
 }
 
 func main() {
 	config = readConfig()
-	http.HandleFunc("/badger/", badgeHandler)
+	http.HandleFunc("/badge/", badgeHandler)
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -51,19 +48,42 @@ func readConfig() *Config {
 }
 
 func badgeHandler(writer http.ResponseWriter, req *http.Request) {
-	project := strings.Split(req.URL.Path, "/")[2]
+	urlBits := strings.Split(req.URL.Path, "/")
+	project := urlBits[2]
+
+	var verb string
+	if len(urlBits) >= 4 {
+		verb = urlBits[3]
+	} else {
+		verb = "build-status"
+	}
+
 	status, err := getStatus(project)
 	if err != nil {
 		log.Println("Error - " + err.Error())
-		http.ServeFile(writer, req, "badges/build-error.svg")
+		http.ServeFile(writer, req, "badges/"+badge.BuildErrorBadge)
 		return
 	}
 
-	badgeFile := getBadge(status.Color)
+	badgeFile := badge.BuildErrorBadge
+	switch verb {
+	case "build-status":
+		badgeFile, err = badge.ForBuildStatus(status)
+	case "rcov":
+		badgeFile, err = badge.ForRCov(status)
+	default:
+		err = fmt.Errorf("Unknown verb: '%s'", verb)
+	}
+
+	if err != nil {
+		log.Println("Error - " + err.Error())
+	}
+
+	log.Printf("%s/%s - %s", project, verb, badgeFile)
 	http.ServeFile(writer, req, "badges/"+badgeFile)
 }
 
-func getStatus(project string) (*buildStatus, error) {
+func getStatus(project string) (*status.BuildStatus, error) {
 	url := "http://" + config.Host + "/job/" + project + "/api/json"
 
 	client := &http.Client{}
@@ -81,7 +101,7 @@ func getStatus(project string) (*buildStatus, error) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 
-	status := buildStatus{}
+	status := status.BuildStatus{}
 	err = json.Unmarshal(body, &status)
 
 	if err != nil {
@@ -89,16 +109,4 @@ func getStatus(project string) (*buildStatus, error) {
 	}
 
 	return &status, nil
-}
-
-func getBadge(status string) string {
-	switch {
-	case status == "blue":
-		return "build-passing.svg"
-	case status == "red":
-		return "build-failing.svg"
-	case strings.Index(status, "_anime") > 0:
-		return "build-building.svg"
-	}
-	return "build-error.svg"
 }
