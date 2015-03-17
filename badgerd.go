@@ -20,13 +20,14 @@ type Config struct {
 	Host  string `json:host`
 	User  string `json:user`
 	Token string `json:token`
+	Port  string `json:port`
 }
 
 func main() {
 	config = readConfig()
 	http.HandleFunc("/badger/", badgeHandler)
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":"+config.Port, nil); err != nil {
 		log.Fatal(err)
 	}
 }
