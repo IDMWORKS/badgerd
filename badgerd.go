@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	// "fmt"
+	"fmt"
 	"github.com/IDMWORKS/badgerd/badge"
 	"github.com/IDMWORKS/badgerd/status"
 	"io/ioutil"
@@ -48,15 +48,38 @@ func readConfig() *Config {
 }
 
 func badgeHandler(writer http.ResponseWriter, req *http.Request) {
-	project := strings.Split(req.URL.Path, "/")[2]
+	urlBits := strings.Split(req.URL.Path, "/")
+	project := urlBits[2]
+
+	var verb string
+	if len(urlBits) >= 4 {
+		verb = urlBits[3]
+	} else {
+		verb = "build-status"
+	}
+
 	status, err := getStatus(project)
 	if err != nil {
 		log.Println("Error - " + err.Error())
-		http.ServeFile(writer, req, "badges/"+badge.ErrorBadge)
+		http.ServeFile(writer, req, "badges/"+badge.BuildErrorBadge)
 		return
 	}
 
-	badgeFile, err := badge.ForBuildStatus(status)
+	badgeFile := badge.BuildErrorBadge
+	switch verb {
+	case "build-status":
+		badgeFile, err = badge.ForBuildStatus(status)
+	case "rcov":
+		badgeFile, err = badge.ForRCov(status)
+	default:
+		err = fmt.Errorf("Unknown verb: '%s'", verb)
+	}
+
+	if err != nil {
+		log.Println("Error - " + err.Error())
+	}
+
+	log.Printf("%s/%s - %s", project, verb, badgeFile)
 	http.ServeFile(writer, req, "badges/"+badgeFile)
 }
 

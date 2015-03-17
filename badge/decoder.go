@@ -3,14 +3,19 @@ package badge
 import (
 	"fmt"
 	"github.com/IDMWORKS/badgerd/status"
+	"math"
+	"regexp"
+	"strconv"
 	"strings"
 )
 
 var (
-	ErrorBadge = "build-error.svg"
+	BuildErrorBadge    = "build-error.svg"
+	CoverageErrorBadge = "coverage-error.svg"
 )
 
-func ForBuildColor(color string) (string, error) {
+func ForBuildStatus(status *status.BuildStatus) (string, error) {
+	color := status.Color
 	switch {
 	case color == "blue":
 		return "build-passing.svg", nil
@@ -20,5 +25,27 @@ func ForBuildColor(color string) (string, error) {
 		return "build-building.svg", nil
 	}
 
-	return ErrorBadge, fmt.Errorf("Unknown build color: '%s'", color)
+	return BuildErrorBadge, fmt.Errorf("Unknown build color: '%s'", color)
+}
+
+func ForRCov(status *status.BuildStatus) (string, error) {
+	for i := range status.HealthReport {
+		h := status.HealthReport[i]
+		matched, err := regexp.MatchString("Rcov coverage", h.Description)
+		if err != nil {
+			return CoverageErrorBadge, fmt.Errorf("Parse error: '%s'", err)
+		}
+
+		if matched {
+			digitRe := regexp.MustCompile("Code coverage \\d{1,3}\\.\\d{2}%\\(([^\\)]+)\\)")
+			coverage, err := strconv.ParseFloat(digitRe.FindStringSubmatch(h.Description)[1], 32)
+			if err != nil {
+				return CoverageErrorBadge, fmt.Errorf("Parse error: '%s'", err)
+			}
+
+			coverage = math.Ceil(coverage)
+			return fmt.Sprintf("coverage-%d.svg", int(coverage)), nil
+		}
+	}
+	return CoverageErrorBadge, nil
 }
