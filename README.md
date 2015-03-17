@@ -33,3 +33,7 @@ This call provides badges for coverage at 0-100% or error if the coverage stat c
 * Make init scripts
 * Improve logging
 * Improve configuration (optional params, commandline arguments)
+
+## Thanks
+
+The badge files come from the amazing [shields.io](http://shields.io/) site. If you need a badge they've got you covered.
