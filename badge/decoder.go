@@ -2,6 +2,7 @@ package badge
 
 import (
 	"fmt"
+	"github.com/IDMWORKS/badgerd/status"
 	"strings"
 )
 

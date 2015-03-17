@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	// "fmt"
 	"github.com/IDMWORKS/badgerd/badge"
+	"github.com/IDMWORKS/badgerd/status"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -19,12 +20,6 @@ type Config struct {
 	Host  string `json:host`
 	User  string `json:user`
 	Token string `json:token`
-}
-
-type buildStatus struct {
-	DisplayName string `json:displayName`
-	Url         string `json:url`
-	Color       string `json:color`
 }
 
 func main() {
@@ -60,11 +55,11 @@ func badgeHandler(writer http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	badgeFile, err := badge.ForBuildColor(status.Color)
+	badgeFile, err := badge.ForBuildStatus(status)
 	http.ServeFile(writer, req, "badges/"+badgeFile)
 }
 
-func getStatus(project string) (*buildStatus, error) {
+func getStatus(project string) (*status.BuildStatus, error) {
 	url := "http://" + config.Host + "/job/" + project + "/api/json"
 
 	client := &http.Client{}
@@ -82,7 +77,7 @@ func getStatus(project string) (*buildStatus, error) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 
-	status := buildStatus{}
+	status := status.BuildStatus{}
 	err = json.Unmarshal(body, &status)
 
 	if err != nil {
