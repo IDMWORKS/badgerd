@@ -10,7 +10,14 @@ When properly configured you can use badgerd to serve status badges for your jen
 
 http://jenkins-server.example.com/badge/Jenkins+Project+Name
 
-This will server one of 4 badges - build passing, build failing, build running, or build error.
+This will serve one of 4 badges - build passing, build failing, build running, or build error.
+
+You can also serve coverage badges for projects using rcov with the [RubyMetrics plugin](https://wiki.jenkins-ci.org/display/JENKINS/RubyMetrics+plugin).
+
+http://jenkins-server.example.com/badge/Jenkins+Project+Name/rcov
+
+This call provides badges for coverage at 0-100% or error if the coverage stat can't be found.
+
 
 ## Installation
 
@@ -20,7 +27,7 @@ This will server one of 4 badges - build passing, build failing, build running, 
 * configure your front end webserver to forward the location /badge/ to the port you've configured (:8081 by default)
 * ./badgerd
 
-Todo
+## Todo
 
 * Make badgerd run as a daemon
 * Make init scripts
